@@ -4,6 +4,8 @@ package br.com.encurtadorurl.service;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
+import java.util.Arrays;
+import java.util.List;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -17,6 +19,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import br.com.encurtadorurl.dao.EncurtadorUrlDAO;
+import br.com.encurtadorurl.model.Url;
 
 @RunWith(SpringRunner.class)
 @DataJpaTest
@@ -67,4 +70,30 @@ public class EncurtadorUrlServiceImplTest{
 		Assert.assertEquals("001", urlBuilder.jsonToUrl(urlJson).getErrCode());
 	}
 	
+	@Test
+	public void listUrlMostAccessedTest(){
+		List<Url> urlsMostAccessed = Arrays.asList(
+				urlBuilder.withUrlOriginal("teste13.com").withAccess(14).build(),
+				urlBuilder.withUrlOriginal("teste1.com").withAccess(13).build(),
+				urlBuilder.withUrlOriginal("teste2.com").withAccess(12).build(),
+				urlBuilder.withUrlOriginal("teste3.com").withAccess(11).build(),
+				urlBuilder.withUrlOriginal("teste4.com").withAccess(10).build(),
+				urlBuilder.withUrlOriginal("teste5.com").withAccess(9).build(),
+				urlBuilder.withUrlOriginal("teste6.com").withAccess(8).build(),
+				urlBuilder.withUrlOriginal("teste7.com").withAccess(7).build(),
+				urlBuilder.withUrlOriginal("teste8.com").withAccess(6).build(),
+				urlBuilder.withUrlOriginal("teste9.com").withAccess(5).build());
+		
+		List<Url> urlsLessAccessed = Arrays.asList(
+				urlBuilder.withUrlOriginal("teste10.com").withAccess(4).build(),
+				urlBuilder.withUrlOriginal("teste11.com").withAccess(3).build(),
+				urlBuilder.withUrlOriginal("teste12.com").withAccess(2).build());
+		
+		encurtadorUrlDAO.save(urlsMostAccessed);
+		encurtadorUrlDAO.save(urlsLessAccessed);
+		
+		Assert.assertEquals(urlsMostAccessed, encurtadorUrlDAO.findUrlsMostAccessed());
+		
+
+	}
 }

@@ -16,12 +16,15 @@ public class UrlBuilder {
 	
 	private ObjectMapper mapper;
 	
+	private Integer access;
+	
 	private UrlBuilder(){}
 	
 	public Url build(){
 		Url url = new Url();
 		url.setUrlOriginal(urlOriginal);
 		url.setAlias(alias);
+		url.setAccess(access);
 		return url;
 	}
 	
@@ -33,6 +36,11 @@ public class UrlBuilder {
 	
 	public UrlBuilder withUrlOriginal(String url){
 		this.urlOriginal = url;
+		return this;
+	}
+	
+	public UrlBuilder withAccess(Integer access){
+		this.access = access;
 		return this;
 	}
 	
