@@ -1,14 +1,11 @@
 package br.com.encurtadorurl.controller;
 
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,6 +20,11 @@ import br.com.encurtadorurl.model.Statistics;
 import br.com.encurtadorurl.model.Url;
 import br.com.encurtadorurl.service.EncurtadorUrlService;
 
+/** Controlador responsável por tratar as requisições da API
+ * @author Murillo Santana
+ * @version 1.0.0
+ */
+
 @RestController
 public class CtrlEncurtadorUrl {
 
@@ -31,46 +33,42 @@ public class CtrlEncurtadorUrl {
 	@Autowired
 	private EncurtadorUrlService encurtadorUrlService;
 
+	//Método responsável por retornar um JSON com a url encurtada
 	@RequestMapping(value = { "/shortenurl" }, method = RequestMethod.GET)
-	public ResponseEntity<?> shortenUrl(@ModelAttribute Url urlObj, HttpServletRequest request) {
+	public ResponseEntity<?> shortenUrl(@ModelAttribute Url urlObj, HttpServletRequest request)
+			throws JsonProcessingException, MalformedURLException, URISyntaxException {
 		stat.setStartRequest(Long.parseLong(request.getAttribute("startRequest").toString()));
 		stat.setIpUser(request.getRemoteAddr());
 
-		try {
-			urlObj.setStatistics(stat.generateTimeTaken());
-			return ResponseEntity.ok(encurtadorUrlService.shortenUrl(urlObj, stat));
-		} catch (JsonProcessingException e) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
-		} catch (MalformedURLException e) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
-		} catch (URISyntaxException e) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
-		}
+		urlObj.setStatistics(stat.generateTimeTaken());
+				
+		return ResponseEntity.ok(encurtadorUrlService.shortenUrl(urlObj));
 	}
-
+	
+	/* Retorna a url relacionada ao alias passado como parâmetro
+	 * o método possui dois retornos possiveis, o primeiro é um ModelAndView que deve redirecionar 
+	 * a page, o segundo é um JSON com dados informando um erro na busca.
+	 */
 	@RequestMapping(value = { "/retrieveurl" }, method = RequestMethod.GET)
-	public Object retrieveUrl(@RequestParam("alias") String alias, HttpServletResponse response) throws IOException {
-		// encurtadorUrlService.retrieveUrl(alias)
+	public Object retrieveUrl(@RequestParam("alias") String alias) {
 		String valor = null;
 		try {
 			valor = encurtadorUrlService.retrieveUrl(alias);
 			encurtadorUrlService.validaUrl(valor);
 			return new ModelAndView("redirect:" + valor);
-		} catch (JsonProcessingException e) {
-			e.printStackTrace();
-			return null;
-		} catch (MalformedURLException e) {
-			return valor;
 
 		} catch (URISyntaxException e) {
 			return valor;
+		} catch (JsonProcessingException e) {
+			return valor;
+		} catch (MalformedURLException e) {
+			return valor;
 		}
 	}
-	
-	@RequestMapping(value = {"/mostAccessed"}, method = RequestMethod.GET)
-	public void urlsMostAccessed(){
-		for (Url url : encurtadorUrlService.listUrlMostAccessed()) {
-			System.out.println(url.getUrlOriginal());
-		}
+
+	// Retorna os 10 alias mais acessados
+	@RequestMapping(value = { "/mostAccessed" }, method = RequestMethod.GET)
+	public ResponseEntity<?> urlsMostAccessed() {
+		return ResponseEntity.ok(encurtadorUrlService.listUrlMostAccessed());
 	}
 }

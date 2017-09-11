@@ -10,6 +10,12 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 
 import org.springframework.stereotype.Component;
+
+/** Filtro criado para disparar timer para calcular o time_taken
+ * @author Murillo Santana
+ * @version 1.0.0
+ */
+
 @Component
 public class FilterTime implements Filter{
 

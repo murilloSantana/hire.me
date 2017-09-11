@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+
 @Entity
 @JsonInclude(Include.NON_NULL)
 public class Url {
@@ -23,7 +24,6 @@ public class Url {
 	
 	private String alias;
 	
-	@JsonIgnore
 	private Integer access;
 	
 	@Transient
@@ -50,6 +50,7 @@ public class Url {
 
 	// tratando a url para padronizacao, o www é removido para tratar requisicoes com ou sem www da mesma maneira
 	public void setUrlOriginal(String urlOriginal) {
+		
 		urlOriginal = urlOriginal.replaceFirst(".*://", "");
 
 		if(urlOriginal.startsWith("www."))

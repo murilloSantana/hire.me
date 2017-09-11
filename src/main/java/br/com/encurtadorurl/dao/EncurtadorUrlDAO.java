@@ -8,6 +8,11 @@ import org.springframework.data.repository.query.Param;
 
 import br.com.encurtadorurl.model.Url;
 
+/** Repositório DAO da Classe Url 
+ * @author Murillo Santana
+ * @version 1.0.0
+ */
+
 public interface EncurtadorUrlDAO extends JpaRepository<Url, Long>{
 
 	@Query(value = "SELECT * "

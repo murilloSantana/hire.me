@@ -15,8 +15,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.hash.Hashing;
 
 import br.com.encurtadorurl.dao.EncurtadorUrlDAO;
-import br.com.encurtadorurl.model.Statistics;
 import br.com.encurtadorurl.model.Url;
+
+/** Serviço responsável por tratar as Urls e alias passados pelo usuário
+ * @author Murillo Santana
+ * @version 1.0.0
+ */
 
 @Service("encurtadorService")
 public class EncurtadorUrlServiceImpl implements EncurtadorUrlService{
@@ -28,22 +32,17 @@ public class EncurtadorUrlServiceImpl implements EncurtadorUrlService{
 	
 	private Url url;
 	
+	/*
+	 * Método responsável por encurtar a url
+	 * A função suporta 4 comportamentos diferentes de acordo com a url e o alias informados.
+	 * São tratadas urls com alias não informado mas já existente no banco de dados, url sem
+	 * alias porém já existente e também não existente e por último requisições apenas com a url.
+	 */
 	@Override
-	public String shortenUrl(Url urlObj, Statistics stat) throws JsonProcessingException, MalformedURLException, URISyntaxException {
+	public String shortenUrl(Url urlObj) throws JsonProcessingException, MalformedURLException, URISyntaxException {
 		mapper = new ObjectMapper();
 		
-		if(urlObj.getAlias() == null){
-			//Encurtando a URL original passada pelo usuario usando o murmur3 (funcao hash nao criptografica)
-			// de 32 bits, para ter um alias de tamanho fixo não grande
-			urlObj.setUrlOriginal(validaUrl(urlObj.getUrlOriginal()));
-			urlObj.setAlias(encodeUrl(urlObj.getUrlOriginal()));
-			urlObj.setAccess(0);
-			
-			if(encurtadorUrlDAO.findUrlOriginal(urlObj.getUrlOriginal()) != null)
-				return mapper.writeValueAsString(urlObj);
-		}
-		
-		if(encurtadorUrlDAO.findAlias(urlObj.getAlias()) != null || encurtadorUrlDAO.findAlias(addPrefixAlias(urlObj.getAlias())) != null){
+		if(encurtadorUrlDAO.findAlias(urlObj.getAlias()) != null){
 			Url urlError = new Url();
 			urlError.setAlias(urlObj.getAlias());
 			urlError.setErrCode("001");
@@ -51,12 +50,31 @@ public class EncurtadorUrlServiceImpl implements EncurtadorUrlService{
 				
 			return mapper.writeValueAsString(urlError);
 		}
+		Url urlOld;
+		if((urlOld = encurtadorUrlDAO.findUrlOriginal(urlObj.getUrlOriginal())) != null && urlObj.getAlias() == null ){
+			urlOld.setStatistics(urlObj.getStatistics());
+			
+			return mapper.writeValueAsString(urlOld);
+		}else{
+			
+			urlObj.setUrlOriginal(validaUrl(urlObj.getUrlOriginal()));
+			urlObj.setAlias(urlObj.getAlias() == null ? encodeUrl(urlObj.getUrlOriginal()) : urlObj.getAlias());
+			urlObj.setAccess(0);
+			
+			encurtadorUrlDAO.save(urlObj);
+			
+			return mapper.writeValueAsString(urlObj);
+			
+		}
 		
-		encurtadorUrlDAO.save(urlObj);
-		
-		return mapper.writeValueAsString(urlObj);
 	}
 	
+	/*
+	 * Método responsável por retornar uma url e redirecionar o usuario para a mesma
+	 * A função recebe como parâmetro um alias passado pelo client, retornando um erro quando não encontrado
+	 * no banco de dados e retornando a url para que o redirecionamento seja feito, além de acrescentar o 
+	 * contador de acessos
+	 */
 	@Override
 	public String retrieveUrl(String alias) throws JsonProcessingException, MalformedURLException, URISyntaxException{
 		url = encurtadorUrlDAO.findAlias(alias);
@@ -78,27 +96,22 @@ public class EncurtadorUrlServiceImpl implements EncurtadorUrlService{
 		return validaUrl(url.getUrlOriginal());
 	}
 	
+	//Realiza uma pesquisa no Banco de dados pelas 10 urls mais acessadas
 	@Override
 	public List<Url> listUrlMostAccessed(){
 		return encurtadorUrlDAO.findUrlsMostAccessed();
 	}
 	
-	@Override
-	public String addPrefixAlias(String alias) throws MalformedURLException, URISyntaxException{
-		StringBuffer buffer = new StringBuffer();
-		buffer.append("mu.me/");
-		buffer.append(alias);
-		
-		return validaUrl(buffer.toString());
-	}
-	
+	//Encurta a URL original passada pelo usuario usando o murmur3 (funcao hash nao criptografica)
+	// de 32 bits, para ter um alias de tamanho fixo não grande
 	@Override
 	public String encodeUrl(String urlOriginal){
 		return Hashing.murmur3_32().hashString(urlOriginal, StandardCharsets.UTF_8).toString();
 	}
 	
+	//Verifica se a url é válida, e adiciona o protocolo http no caso da url vir sem
 	@Override
-	public String validaUrl(String urlOriginal) throws URISyntaxException, MalformedURLException{
+	public String validaUrl(String urlOriginal) throws MalformedURLException, URISyntaxException{
 		URI uri = new URI(urlOriginal);
         URL url = null;
 
