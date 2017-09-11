@@ -58,7 +58,7 @@ public class EncurtadorUrlServiceImpl implements EncurtadorUrlService{
 		}else{
 			
 			urlObj.setUrlOriginal(validaUrl(urlObj.getUrlOriginal()));
-			urlObj.setAlias(urlObj.getAlias() == null ? encodeUrl(urlObj.getUrlOriginal()) : urlObj.getAlias());
+			urlObj.setAlias(urlObj.getAlias() == null || urlObj.getAlias().trim() == "" ? encodeUrl(urlObj.getUrlOriginal()) : urlObj.getAlias());
 			urlObj.setAccess(0);
 			
 			encurtadorUrlDAO.save(urlObj);
