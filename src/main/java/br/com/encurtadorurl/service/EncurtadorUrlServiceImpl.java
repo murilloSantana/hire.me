@@ -42,6 +42,9 @@ public class EncurtadorUrlServiceImpl implements EncurtadorUrlService{
 	public String shortenUrl(Url urlObj) throws JsonProcessingException, MalformedURLException, URISyntaxException {
 		mapper = new ObjectMapper();
 		
+		if(urlObj.getUrlOriginal().trim() == "")
+			return null;
+		
 		if(encurtadorUrlDAO.findAlias(urlObj.getAlias()) != null){
 			Url urlError = new Url();
 			urlError.setAlias(urlObj.getAlias());
@@ -51,7 +54,7 @@ public class EncurtadorUrlServiceImpl implements EncurtadorUrlService{
 			return mapper.writeValueAsString(urlError);
 		}
 		Url urlOld;
-		if((urlOld = encurtadorUrlDAO.findUrlOriginal(urlObj.getUrlOriginal())) != null && urlObj.getAlias() == null ){
+		if((urlOld = encurtadorUrlDAO.findUrlOriginal(urlObj.getUrlOriginal())) != null && (urlObj.getAlias() == null || urlObj.getAlias().trim() == "")){
 			urlOld.setStatistics(urlObj.getStatistics());
 			
 			return mapper.writeValueAsString(urlOld);
